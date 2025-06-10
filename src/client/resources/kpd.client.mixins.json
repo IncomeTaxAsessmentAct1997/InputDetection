@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "duncanjones.kpd.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ExampleClientMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "kpd",
+	"version": "${version}",
+	"name": "kpd",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/kpd/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"duncanjones.kpd.KeyPressDetector"
+		],
+		"client": [
+			"duncanjones.kpd.KeyPressDetectorClient"
+		]
+	},
+	"mixins": [
+		"kpd.mixins.json",
+		{
+			"config": "kpd.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
