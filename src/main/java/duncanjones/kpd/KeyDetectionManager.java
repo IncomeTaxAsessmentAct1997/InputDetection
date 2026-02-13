@@ -1,5 +1,6 @@
 package duncanjones.kpd;
 
+import com.mojang.brigadier.ParseResults;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -45,13 +46,14 @@ public class KeyDetectionManager {
 		List<KeyBinding> playerBindings = bindings.get(key);
 
 		if (playerBindings != null && !playerBindings.isEmpty()) {
-			ServerCommandSource source = player.getServer().getCommandSource()
+			ServerCommandSource source = player.getCommandSource()
 					.withSilent()
 					.withLevel(2);
 
 			for (KeyBinding binding : playerBindings) {
 				String command = "function " + binding.functionId().toString();
-				player.getServer().getCommandManager().executeWithPrefix(source, command);
+				ParseResults<ServerCommandSource> parseResults = source.getServer().getCommandManager().getDispatcher().parse(command, source);
+				source.getServer().getCommandManager().execute(parseResults, command);
 			}
 		}
 	}
