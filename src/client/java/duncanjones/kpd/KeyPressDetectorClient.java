@@ -14,12 +14,10 @@ public class KeyPressDetectorClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		KeyPressDetector.LOGGER.info("Initializing Key Press Detector Client");
-
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (client.player == null || client.getWindow() == null) return;
 
-			for (int keyCode = 0; keyCode <= 255; keyCode++) {
+			for (int keyCode = 32; keyCode <= 348; keyCode++) {
 				boolean currentState = GLFW.glfwGetKey(client.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
 				boolean previousState = prevKeyStates.getOrDefault(keyCode, false);
 
@@ -31,14 +29,6 @@ public class KeyPressDetectorClient implements ClientModInitializer {
 					sendKeyEvent(keyCode, "release");
 					keyHoldStartTimes.remove(keyCode);
 				}
-				else if (currentState) {
-					Long startTime = keyHoldStartTimes.get(keyCode);
-					if (startTime != null && (System.currentTimeMillis() - startTime) >= 500) {
-						sendKeyEvent(keyCode, "hold");
-						keyHoldStartTimes.remove(keyCode);
-					}
-				}
-
 				prevKeyStates.put(keyCode, currentState);
 			}
 		});
