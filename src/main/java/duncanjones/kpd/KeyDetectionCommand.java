@@ -34,41 +34,49 @@ public class KeyDetectionCommand {
 	}
 
 	private static void registerKeyDetectionCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
-		dispatcher.register(literal("keydetection")
-				.requires(source -> source.hasPermissionLevel(2))
-				.then(argument("players", EntityArgumentType.entities())
-						.then(literal("add")
-								.then(literal("press")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.then(literal("run")
-														.then(argument("function", IdentifierArgumentType.identifier())
-																.suggests(FUNCTION_SUGGESTIONS)
-																.executes(context -> executeAdd(context, "press"))))))
-								.then(literal("release")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.then(literal("run")
-														.then(argument("function", IdentifierArgumentType.identifier())
-																.suggests(FUNCTION_SUGGESTIONS)
-																.executes(context -> executeAdd(context, "release"))))))
-								.then(literal("hold")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.then(literal("run")
-														.then(argument("function", IdentifierArgumentType.identifier())
-																.suggests(FUNCTION_SUGGESTIONS)
-																.executes(context -> executeAdd(context, "hold")))))))
-						.then(literal("remove")
-								.then(literal("press")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.executes(context -> executeRemove(context, "press"))))
-								.then(literal("release")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.executes(context -> executeRemove(context, "release"))))
-								.then(literal("hold")
-										.then(argument("key", IntegerArgumentType.integer(0, 511))
-												.executes(context -> executeRemove(context, "hold"))))
-								.executes(KeyDetectionCommand::executeRemoveAll))
-						.then(literal("list")
-								.executes(KeyDetectionCommand::executeList))));
+		dispatcher.register(literal("detection")
+			.requires(source -> source.hasPermissionLevel(2))
+			.then(argument("players", EntityArgumentType.entities())
+				.then(literal("add")
+						.then(literal("press")
+								.then(argument("key", IntegerArgumentType.integer(0, 511))
+										.then(literal("run")
+												.then(argument("function", IdentifierArgumentType.identifier())
+														.suggests(FUNCTION_SUGGESTIONS)
+														.executes(context -> executeAdd(context, "press"))
+												)
+										)
+								)
+						)
+						.then(literal("release")
+								.then(argument("key", IntegerArgumentType.integer(0, 511))
+										.then(literal("run")
+												.then(argument("function", IdentifierArgumentType.identifier())
+														.suggests(FUNCTION_SUGGESTIONS)
+														.executes(context -> executeAdd(context, "release"))
+												)
+										)
+								)
+						)
+				)
+				.then(literal("remove")
+						.then(literal("press")
+								.then(argument("key", IntegerArgumentType.integer(0, 511))
+										.executes(context -> executeRemove(context, "press"))
+								)
+						)
+						.then(literal("release")
+								.then(argument("key", IntegerArgumentType.integer(0, 511))
+										.executes(context -> executeRemove(context, "release"))
+								)
+						)
+						.executes(KeyDetectionCommand::executeRemoveAll)
+				)
+				.then(literal("list")
+						.executes(KeyDetectionCommand::executeList)
+				)
+			)
+		);
 	}
 
 	private static int executeAdd(CommandContext<ServerCommandSource> context, String keyType) {
@@ -88,16 +96,19 @@ public class KeyDetectionCommand {
 
 			if (addedCount > 0) {
 				final int finalCount = addedCount;
+				final int finalKeyCode = keyCode;
+				final String finalKeyType = keyType;
+				final String finalFunctionId = functionId.toString(); // 转换为字符串
 				context.getSource().sendFeedback(() ->
-						Text.literal("Added key detection for " + finalCount + " player(s) | Key: " + keyCode +
-								" | Type: " + keyType + " | Function: " + functionId), false);
+						Text.translatable("commands.press_detection.add.success",
+								finalCount, finalKeyCode, finalKeyType, finalFunctionId), false);
 			} else {
-				context.getSource().sendError(Text.literal("No players found in selection"));
+				context.getSource().sendError(Text.translatable("commands.press_detection.add.no_players"));
 			}
 
 			return addedCount;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
@@ -118,16 +129,18 @@ public class KeyDetectionCommand {
 
 			if (removedCount > 0) {
 				final int finalCount = removedCount;
+				final int finalKeyCode = keyCode;
+				final String finalKeyType = keyType;
 				context.getSource().sendFeedback(() ->
-						Text.literal("Removed key detection for " + finalCount + " player(s) | Key: " + keyCode +
-								" | Type: " + keyType), false);
+						Text.translatable("commands.press_detection.remove.success",
+								finalCount, finalKeyCode, finalKeyType), false);
 			} else {
-				context.getSource().sendError(Text.literal("No bindings found for that key and type"));
+				context.getSource().sendError(Text.translatable("commands.press_detection.remove.not_found"));
 			}
 
 			return removedCount;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
@@ -147,11 +160,11 @@ public class KeyDetectionCommand {
 
 			final int finalCount = totalRemoved;
 			context.getSource().sendFeedback(() ->
-					Text.literal("Cleared " + finalCount + " key detection(s) for selected player(s)"), false);
+					Text.translatable("commands.press_detection.remove_all.success", finalCount), false);
 
 			return totalRemoved;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
@@ -166,16 +179,20 @@ public class KeyDetectionCommand {
 
 					if (bindings.isEmpty()) {
 						context.getSource().sendFeedback(() ->
-								Text.literal("No key detections found for " + player.getName().getString()), false);
+								Text.translatable("commands.press_detection.list.no_bindings",
+										player.getName().getString()), false);
 					} else {
 						context.getSource().sendFeedback(() ->
-								Text.literal("Key detections for " + player.getName().getString() + ":"), false);
+								Text.translatable("commands.press_detection.list.header",
+										player.getName().getString()), false);
 
 						for (KeyBinding binding : bindings) {
+							final int finalKeyCode = binding.keyCode();
+							final String finalKeyType = binding.keyType();
+							final String finalFunctionId = binding.functionId().toString(); // 转换为字符串
 							context.getSource().sendFeedback(() ->
-									Text.literal("- Key: " + binding.keyCode() +
-											" | Type: " + binding.keyType() +
-											" | Function: " + binding.functionId()), false);
+									Text.translatable("commands.press_detection.list.entry",
+											finalKeyCode, finalKeyType, finalFunctionId), false);
 						}
 					}
 				}
@@ -183,7 +200,7 @@ public class KeyDetectionCommand {
 
 			return 1;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
