@@ -1,0 +1,11 @@
+{
+  "commands.press_detection.add.success": "Added key detection for %s player(s) | Key: %s | Type: %s | Function: %s",
+  "commands.press_detection.add.no_players": "No players found in selection",
+  "commands.press_detection.remove.success": "Removed key detection for %s player(s) | Key: %s | Type: %s",
+  "commands.press_detection.remove.not_found": "No bindings found for that key and type",
+  "commands.press_detection.remove_all.success": "Cleared %s key detection(s) for selected player(s)",
+  "commands.press_detection.list.no_bindings": "No key detections found for %s",
+  "commands.press_detection.list.header": "Key detections for %s:",
+  "commands.press_detection.list.entry": "- Key: %s | Type: %s | Function: %s",
+  "commands.press_detection.error.generic": "Error: %s"
+}
