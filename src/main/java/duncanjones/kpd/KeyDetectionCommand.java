@@ -6,23 +6,23 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.IdentifierArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import java.util.Collection;
 import java.util.List;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class KeyDetectionCommand {
 
-	private static final SuggestionProvider<ServerCommandSource> FUNCTION_SUGGESTIONS = (context, builder) -> {
-		Iterable<Identifier> functions = context.getSource().getServer().getCommandFunctionManager().getAllFunctions();
+	private static final SuggestionProvider<CommandSourceStack> FUNCTION_SUGGESTIONS = (context, builder) -> {
+		Iterable<Identifier> functions = context.getSource().getServer().getFunctions().getFunctionNames();
 		for (Identifier function : functions) {
 			builder.suggest(function.toString());
 		}
@@ -33,15 +33,15 @@ public class KeyDetectionCommand {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerKeyDetectionCommand(dispatcher));
 	}
 
-	private static void registerKeyDetectionCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
+	private static void registerKeyDetectionCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(literal("detection")
-			.requires(source -> source.hasPermissionLevel(2))
-			.then(argument("players", EntityArgumentType.entities())
+			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+			.then(argument("players", EntityArgument.entities())
 				.then(literal("add")
 						.then(literal("press")
 								.then(argument("key", IntegerArgumentType.integer(0, 511))
 										.then(literal("run")
-												.then(argument("function", IdentifierArgumentType.identifier())
+												.then(argument("function", IdentifierArgument.id())
 														.suggests(FUNCTION_SUGGESTIONS)
 														.executes(context -> executeAdd(context, "press"))
 												)
@@ -51,7 +51,7 @@ public class KeyDetectionCommand {
 						.then(literal("release")
 								.then(argument("key", IntegerArgumentType.integer(0, 511))
 										.then(literal("run")
-												.then(argument("function", IdentifierArgumentType.identifier())
+												.then(argument("function", IdentifierArgument.id())
 														.suggests(FUNCTION_SUGGESTIONS)
 														.executes(context -> executeAdd(context, "release"))
 												)
@@ -79,15 +79,15 @@ public class KeyDetectionCommand {
 		);
 	}
 
-	private static int executeAdd(CommandContext<ServerCommandSource> context, String keyType) {
+	private static int executeAdd(CommandContext<CommandSourceStack> context, String keyType) {
 		try {
-			Collection<? extends net.minecraft.entity.Entity> entities = EntityArgumentType.getEntities(context, "players");
+			Collection<? extends net.minecraft.world.entity.Entity> entities = EntityArgument.getEntities(context, "players");
 			int keyCode = IntegerArgumentType.getInteger(context, "key");
-			Identifier functionId = IdentifierArgumentType.getIdentifier(context, "function");
+			Identifier functionId = IdentifierArgument.getId(context, "function");
 
 			int addedCount = 0;
-			for (net.minecraft.entity.Entity entity : entities) {
-				if (entity instanceof ServerPlayerEntity player) {
+			for (net.minecraft.world.entity.Entity entity : entities) {
+				if (entity instanceof ServerPlayer player) {
 					KeyBinding binding = new KeyBinding(player, keyCode, keyType, functionId);
 					KeyDetectionManager.addBinding(binding);
 					addedCount++;
@@ -99,28 +99,28 @@ public class KeyDetectionCommand {
 				final int finalKeyCode = keyCode;
 				final String finalKeyType = keyType;
 				final String finalFunctionId = functionId.toString(); // 转换为字符串
-				context.getSource().sendFeedback(() ->
-						Text.translatable("commands.press_detection.add.success",
+				context.getSource().sendSuccess(() ->
+						Component.translatable("commands.press_detection.add.success",
 								finalCount, finalKeyCode, finalKeyType, finalFunctionId), false);
 			} else {
-				context.getSource().sendError(Text.translatable("commands.press_detection.add.no_players"));
+				context.getSource().sendFailure(Component.translatable("commands.press_detection.add.no_players"));
 			}
 
 			return addedCount;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
+			context.getSource().sendFailure(Component.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
 
-	private static int executeRemove(CommandContext<ServerCommandSource> context, String keyType) {
+	private static int executeRemove(CommandContext<CommandSourceStack> context, String keyType) {
 		try {
-			Collection<? extends net.minecraft.entity.Entity> entities = EntityArgumentType.getEntities(context, "players");
+			Collection<? extends net.minecraft.world.entity.Entity> entities = EntityArgument.getEntities(context, "players");
 			int keyCode = IntegerArgumentType.getInteger(context, "key");
 
 			int removedCount = 0;
-			for (net.minecraft.entity.Entity entity : entities) {
-				if (entity instanceof ServerPlayerEntity player) {
+			for (net.minecraft.world.entity.Entity entity : entities) {
+				if (entity instanceof ServerPlayer player) {
 					if (KeyDetectionManager.removeBinding(player, keyCode, keyType)) {
 						removedCount++;
 					}
@@ -131,27 +131,27 @@ public class KeyDetectionCommand {
 				final int finalCount = removedCount;
 				final int finalKeyCode = keyCode;
 				final String finalKeyType = keyType;
-				context.getSource().sendFeedback(() ->
-						Text.translatable("commands.press_detection.remove.success",
+				context.getSource().sendSuccess(() ->
+						Component.translatable("commands.press_detection.remove.success",
 								finalCount, finalKeyCode, finalKeyType), false);
 			} else {
-				context.getSource().sendError(Text.translatable("commands.press_detection.remove.not_found"));
+				context.getSource().sendFailure(Component.translatable("commands.press_detection.remove.not_found"));
 			}
 
 			return removedCount;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
+			context.getSource().sendFailure(Component.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
 
-	private static int executeRemoveAll(CommandContext<ServerCommandSource> context) {
+	private static int executeRemoveAll(CommandContext<CommandSourceStack> context) {
 		try {
-			Collection<? extends net.minecraft.entity.Entity> entities = EntityArgumentType.getEntities(context, "players");
+			Collection<? extends net.minecraft.world.entity.Entity> entities = EntityArgument.getEntities(context, "players");
 
 			int totalRemoved = 0;
-			for (net.minecraft.entity.Entity entity : entities) {
-				if (entity instanceof ServerPlayerEntity player) {
+			for (net.minecraft.world.entity.Entity entity : entities) {
+				if (entity instanceof ServerPlayer player) {
 					List<KeyBinding> bindings = KeyDetectionManager.getBindings(player);
 					totalRemoved += bindings.size();
 					KeyDetectionManager.removeAllBindings(player);
@@ -159,39 +159,39 @@ public class KeyDetectionCommand {
 			}
 
 			final int finalCount = totalRemoved;
-			context.getSource().sendFeedback(() ->
-					Text.translatable("commands.press_detection.remove_all.success", finalCount), false);
+			context.getSource().sendSuccess(() ->
+					Component.translatable("commands.press_detection.remove_all.success", finalCount), false);
 
 			return totalRemoved;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
+			context.getSource().sendFailure(Component.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
 
-	private static int executeList(CommandContext<ServerCommandSource> context) {
+	private static int executeList(CommandContext<CommandSourceStack> context) {
 		try {
-			Collection<? extends net.minecraft.entity.Entity> entities = EntityArgumentType.getEntities(context, "players");
+			Collection<? extends net.minecraft.world.entity.Entity> entities = EntityArgument.getEntities(context, "players");
 
-			for (net.minecraft.entity.Entity entity : entities) {
-				if (entity instanceof ServerPlayerEntity player) {
+			for (net.minecraft.world.entity.Entity entity : entities) {
+				if (entity instanceof ServerPlayer player) {
 					List<KeyBinding> bindings = KeyDetectionManager.getBindings(player);
 
 					if (bindings.isEmpty()) {
-						context.getSource().sendFeedback(() ->
-								Text.translatable("commands.press_detection.list.no_bindings",
+						context.getSource().sendSuccess(() ->
+								Component.translatable("commands.press_detection.list.no_bindings",
 										player.getName().getString()), false);
 					} else {
-						context.getSource().sendFeedback(() ->
-								Text.translatable("commands.press_detection.list.header",
+						context.getSource().sendSuccess(() ->
+								Component.translatable("commands.press_detection.list.header",
 										player.getName().getString()), false);
 
 						for (KeyBinding binding : bindings) {
 							final int finalKeyCode = binding.keyCode();
 							final String finalKeyType = binding.keyType();
 							final String finalFunctionId = binding.functionId().toString(); // 转换为字符串
-							context.getSource().sendFeedback(() ->
-									Text.translatable("commands.press_detection.list.entry",
+							context.getSource().sendSuccess(() ->
+									Component.translatable("commands.press_detection.list.entry",
 											finalKeyCode, finalKeyType, finalFunctionId), false);
 						}
 					}
@@ -200,7 +200,7 @@ public class KeyDetectionCommand {
 
 			return 1;
 		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(Text.translatable("commands.press_detection.error.generic", e.getMessage()));
+			context.getSource().sendFailure(Component.translatable("commands.press_detection.error.generic", e.getMessage()));
 			return 0;
 		}
 	}
