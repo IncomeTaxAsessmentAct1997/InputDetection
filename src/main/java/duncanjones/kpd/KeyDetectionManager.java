@@ -1,13 +1,12 @@
 package duncanjones.kpd;
 
 import com.mojang.brigadier.ParseResults;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 
 public class KeyDetectionManager {
 	private static final Map<String, List<KeyBinding>> bindings = new ConcurrentHashMap<>();
@@ -17,22 +16,22 @@ public class KeyDetectionManager {
 		bindings.computeIfAbsent(key, k -> new ArrayList<>()).add(binding);
 	}
 
-	public static boolean removeBinding(ServerPlayerEntity player, int keyCode, String keyType) {
+	public static boolean removeBinding(ServerPlayer player, int keyCode, String keyType) {
 		String key = createKey(player, keyCode, keyType);
 		return bindings.remove(key) != null;
 	}
 
-	public static void removeAllBindings(ServerPlayerEntity player) {
-		bindings.entrySet().removeIf(entry -> entry.getKey().startsWith(player.getUuid().toString()));
+	public static void removeAllBindings(ServerPlayer player) {
+		bindings.entrySet().removeIf(entry -> entry.getKey().startsWith(player.getUUID().toString()));
 	}
 
-	public static List<KeyBinding> getBindings(ServerPlayerEntity player) {
+	public static List<KeyBinding> getBindings(ServerPlayer player) {
 		List<KeyBinding> playerBindings = new ArrayList<>();
-		String playerUuid = player.getUuid().toString();
+		String playerUuid = player.getUUID().toString();
 
 		for (List<KeyBinding> bindingList : bindings.values()) {
 			for (KeyBinding binding : bindingList) {
-				if (binding.player().getUuid().toString().equals(playerUuid)) {
+				if (binding.player().getUUID().toString().equals(playerUuid)) {
 					playerBindings.add(binding);
 				}
 			}
@@ -41,24 +40,22 @@ public class KeyDetectionManager {
 		return playerBindings;
 	}
 
-	public static void executeBindings(ServerPlayerEntity player, int keyCode, String keyType) {
+	public static void executeBindings(ServerPlayer player, int keyCode, String keyType) {
 		String key = createKey(player, keyCode, keyType);
 		List<KeyBinding> playerBindings = bindings.get(key);
 
 		if (playerBindings != null && !playerBindings.isEmpty()) {
-			ServerCommandSource source = player.getCommandSource()
-					.withSilent()
-					.withLevel(2);
+			CommandSourceStack source = player.createCommandSourceStack().withSuppressedOutput();
 
 			for (KeyBinding binding : playerBindings) {
 				String command = "function " + binding.functionId().toString();
-				ParseResults<ServerCommandSource> parseResults = source.getServer().getCommandManager().getDispatcher().parse(command, source);
-				source.getServer().getCommandManager().execute(parseResults, command);
+				ParseResults<CommandSourceStack> parseResults = source.getServer().getCommands().getDispatcher().parse(command, source);
+				source.getServer().getCommands().performCommand(parseResults, command);
 			}
 		}
 	}
 
-	private static String createKey(ServerPlayerEntity player, int keyCode, String keyType) {
-		return player.getUuid().toString() + ":" + keyCode + ":" + keyType;
+	private static String createKey(ServerPlayer player, int keyCode, String keyType) {
+		return player.getUUID().toString() + ":" + keyCode + ":" + keyType;
 	}
 }
