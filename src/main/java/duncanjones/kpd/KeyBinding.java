@@ -1,10 +1,10 @@
 package duncanjones.kpd;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
-public record KeyBinding(ServerPlayerEntity player, int keyCode, String keyType, Identifier functionId) {
+public record KeyBinding(ServerPlayer player, int keyCode, String keyType, Identifier functionId) {
 
 	@Override
 	public boolean equals(Object obj) {
@@ -13,13 +13,13 @@ public record KeyBinding(ServerPlayerEntity player, int keyCode, String keyType,
 
 		KeyBinding that = (KeyBinding) obj;
 		return keyCode == that.keyCode &&
-				player.getUuid().equals(that.player.getUuid()) &&
+				player.getUUID().equals(that.player.getUUID()) &&
 				keyType.equals(that.keyType);
 	}
 
 	@Override
 	public int hashCode() {
-		return player.getUuid().hashCode() + keyCode + keyType.hashCode();
+		return player.getUUID().hashCode() + keyCode + keyType.hashCode();
 	}
 
 	@Override
