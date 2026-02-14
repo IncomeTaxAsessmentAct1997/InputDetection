@@ -98,7 +98,7 @@ public class KeyDetectionCommand {
 				final int finalCount = addedCount;
 				final int finalKeyCode = keyCode;
 				final String finalKeyType = keyType;
-				final String finalFunctionId = functionId.toString(); // 转换为字符串
+				final String finalFunctionId = functionId.toString();
 				context.getSource().sendFeedback(() ->
 						Text.translatable("commands.press_detection.add.success",
 								finalCount, finalKeyCode, finalKeyType, finalFunctionId), false);
@@ -189,7 +189,7 @@ public class KeyDetectionCommand {
 						for (KeyBinding binding : bindings) {
 							final int finalKeyCode = binding.keyCode();
 							final String finalKeyType = binding.keyType();
-							final String finalFunctionId = binding.functionId().toString(); // 转换为字符串
+							final String finalFunctionId = binding.functionId().toString();
 							context.getSource().sendFeedback(() ->
 									Text.translatable("commands.press_detection.list.entry",
 											finalKeyCode, finalKeyType, finalFunctionId), false);
