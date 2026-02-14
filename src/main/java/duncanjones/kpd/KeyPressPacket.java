@@ -1,33 +1,33 @@
 package duncanjones.kpd;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record KeyPressPacket(int keyCode, String eventType) implements CustomPayload {
-	public static final Identifier KEYPRESS_ID = Identifier.of(KeyPressDetector.MOD_ID, "keypress");
-	public static final Id<KeyPressPacket> ID = new Id<>(KEYPRESS_ID);
+public record KeyPressPacket(int keyCode, String eventType) implements CustomPacketPayload {
+	public static final Identifier KEYPRESS_ID = Identifier.fromNamespaceAndPath(KeyPressDetector.MOD_ID, "keypress");
+	public static final Type<KeyPressPacket> ID = new Type<>(KEYPRESS_ID);
 
-	public static final PacketCodec<PacketByteBuf, KeyPressPacket> CODEC = PacketCodec.of(
+	public static final StreamCodec<FriendlyByteBuf, KeyPressPacket> CODEC = StreamCodec.ofMember(
 			KeyPressPacket::write,
 			KeyPressPacket::read
 	);
 
-	public static KeyPressPacket read(PacketByteBuf buf) {
+	public static KeyPressPacket read(FriendlyByteBuf buf) {
 		int keyCode = buf.readInt();
-		String eventType = buf.readString();
+		String eventType = buf.readUtf();
 		return new KeyPressPacket(keyCode, eventType);
 	}
 
-	public void write(PacketByteBuf buf) {
+	public void write(FriendlyByteBuf buf) {
 		buf.writeInt(keyCode);
-		buf.writeString(eventType);
+		buf.writeUtf(eventType);
 	}
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 
