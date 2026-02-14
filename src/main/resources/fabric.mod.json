@@ -3,10 +3,10 @@
 	"id": "kpd",
 	"version": "${version}",
 	"name": "kpd",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "This is a mod that can detect input.",
 	"authors": [
-		"IncomeTaxAsessmentAct1997",
-		"FallingUser"
+		"FallingUser",
+		"IncomeTaxAsessmentAct1997"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
@@ -31,6 +31,6 @@
 		}
 	],
 	"depends": {
-		"minecraft": ">=1.21.9"
+		"minecraft": ">=1.21.11"
 	}
 }
