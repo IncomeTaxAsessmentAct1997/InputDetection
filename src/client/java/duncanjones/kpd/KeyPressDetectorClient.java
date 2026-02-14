@@ -18,7 +18,7 @@ public class KeyPressDetectorClient implements ClientModInitializer {
 			if (client.player == null || client.getWindow() == null) return;
 
 			for (int keyCode = 32; keyCode <= 348; keyCode++) {
-				boolean currentState = GLFW.glfwGetKey(client.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
+				boolean currentState = GLFW.glfwGetKey(client.getWindow().handle(), keyCode) == GLFW.GLFW_PRESS;
 				boolean previousState = prevKeyStates.getOrDefault(keyCode, false);
 
 				if (currentState && !previousState) {
